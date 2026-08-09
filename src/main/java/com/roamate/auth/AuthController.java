@@ -37,13 +37,30 @@ public class AuthController {
         Instant now = Instant.now();
         Instant expiry = now.plus(24, ChronoUnit.HOURS);
 
+        // Explicitly HS256, not left to jjwt's Keys.hmacShaKeyFor() length-based
+        // auto-selection (which picks HS384 for keys >=384 bits, e.g. the
+        // default 60-byte/480-bit dev secret). SecurityConfig's
+        // NimbusJwtDecoder.withSecretKey() defaults to HS256-only validation
+        // regardless of key length, so a mismatch here means every issued
+        // token fails signature validation on every protected endpoint -
+        // silently, since /dev-login itself is unprotected and returns 200
+        // either way.
         String token = Jwts.builder()
                 .subject(request.userId())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
-                .signWith(signingKey)
+                .signWith(signingKey, Jwts.SIG.HS256)
                 .compact();
 
         return new TokenResponse(token, "Bearer", ChronoUnit.SECONDS.between(now, expiry));
+    }
+
+    /**
+     * Simple health check / test endpoint.
+     * Accessible via GET /api/v1/auth/hello
+     */
+    @GetMapping("/hello")
+    public String sayHello() {
+        return "hello";
     }
 }

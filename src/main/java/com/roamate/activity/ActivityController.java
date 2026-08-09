@@ -1,5 +1,6 @@
 package com.roamate.activity;
 
+import com.roamate.activity.dto.DestinationActivitySummary;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,5 +24,11 @@ public class ActivityController {
     @GetMapping("/trips/{tripId}/users/{userId}/sessions")
     public List<ActivitySession> history(@PathVariable UUID tripId, @PathVariable String userId) {
         return activityService.history(tripId, userId);
+    }
+
+    /** ACT-04: aggregated distance/elevation/steps for one destination, used by the Pinned Location Card. */
+    @GetMapping("/destinations/{destinationId}/summary")
+    public DestinationActivitySummary destinationSummary(@PathVariable UUID destinationId) {
+        return activityService.destinationSummary(destinationId);
     }
 }

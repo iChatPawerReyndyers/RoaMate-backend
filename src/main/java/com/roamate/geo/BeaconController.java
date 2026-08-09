@@ -1,6 +1,6 @@
 package com.roamate.geo;
 
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import com.roamate.geo.dto.RaiseBeaconRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -10,20 +10,18 @@ import java.util.UUID;
 @RequestMapping("/api/v1/geo/beacons")
 public class BeaconController {
 
+    private final BeaconService beaconService;
     private final BeaconAlertRepository repository;
-    private final SimpMessagingTemplate messagingTemplate;
 
-    public BeaconController(BeaconAlertRepository repository, SimpMessagingTemplate messagingTemplate) {
+    public BeaconController(BeaconService beaconService, BeaconAlertRepository repository) {
+        this.beaconService = beaconService;
         this.repository = repository;
-        this.messagingTemplate = messagingTemplate;
     }
 
     /** GEO-05: raising a beacon is urgent by definition - push it to online members immediately. */
     @PostMapping
-    public BeaconAlert raise(@RequestBody BeaconAlert alert) {
-        BeaconAlert saved = repository.save(alert);
-        messagingTemplate.convertAndSend("/topic/trips/" + saved.getTripId() + "/beacons", saved);
-        return saved;
+    public BeaconAlert raise(@RequestBody RaiseBeaconRequest request) {
+        return beaconService.raise(request);
     }
 
     @GetMapping("/trips/{tripId}/active")

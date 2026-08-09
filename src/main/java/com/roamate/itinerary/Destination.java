@@ -28,6 +28,9 @@ public class Destination extends BaseEntity {
 
     private String notes;
 
+    /** ITIN-02: street address, distinct from the geotagged coordinates. */
+    private String address;
+
     /** ITIN-02: e.g. "8:00 AM - 5:00 PM" or "Registration closes 8:00 AM". */
     private String operatingHours;
 
@@ -49,6 +52,8 @@ public class Destination extends BaseEntity {
     public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
     public String getOperatingHours() { return operatingHours; }
     public void setOperatingHours(String operatingHours) { this.operatingHours = operatingHours; }
     public Long getTargetBudgetCents() { return targetBudgetCents; }

@@ -1,5 +1,7 @@
 package com.roamate.common;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.persistence.Embeddable;
 
 import java.io.Serializable;
@@ -11,6 +13,14 @@ import java.util.Objects;
  * Money is ALWAYS represented as integer minor units (cents).
  * Per FIN-02 / FIN-05, floating point is never used for currency math
  * anywhere in the system (backend, mobile, or wire format).
+ *
+ * @JsonValue/@JsonCreator make this serialize as a bare integer (matching
+ * every DTO that already exposes cents as a plain long, e.g.
+ * SettlementSummary.netDeltaCents). Without these, an entity with an
+ * embedded Money field returned directly from a controller - as
+ * KittyDeposit is from FinanceController - would serialize as `{}` and
+ * fail to deserialize an incoming amount at all, since `cents` is private
+ * with no bean-style getter and Money has no Jackson-visible constructor.
  */
 @Embeddable
 public final class Money implements Serializable, Comparable<Money> {
@@ -27,6 +37,7 @@ public final class Money implements Serializable, Comparable<Money> {
         this.cents = cents;
     }
 
+    @JsonCreator
     public static Money ofCents(long cents) {
         return new Money(cents);
     }
@@ -36,6 +47,7 @@ public final class Money implements Serializable, Comparable<Money> {
                 .multiply(BigDecimal.valueOf(100)).longValueExact());
     }
 
+    @JsonValue
     public long cents() {
         return cents;
     }
