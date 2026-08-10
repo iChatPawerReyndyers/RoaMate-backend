@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface TripMemberRepository extends JpaRepository<TripMember, UUID> {
     List<TripMember> findByTripId(UUID tripId);
     Optional<TripMember> findByTripIdAndUserId(UUID tripId, String userId);
+    List<TripMember> findByUserId(String userId);
 }

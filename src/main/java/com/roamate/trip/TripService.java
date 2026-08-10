@@ -2,6 +2,7 @@ package com.roamate.trip;
 
 import com.roamate.trip.dto.CreateTripRequest;
 import com.roamate.trip.dto.JoinTripRequest;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +43,13 @@ public class TripService {
         owner.setRole(TripRole.OWNER);
         tripMemberRepository.save(owner);
 
+        // trip.getMembers() is a lazy collection; touching it later (e.g. in
+        // TripController.toDto) happens after this @Transactional method has
+        // returned and its session is closed (open-in-view is off), which
+        // throws LazyInitializationException. Force it to load now, while
+        // the session is still open, so it's just plain in-memory data by
+        // the time the controller reads it.
+        Hibernate.initialize(trip.getMembers());
         return trip;
     }
 
@@ -50,19 +58,37 @@ public class TripService {
         Trip trip = tripRepository.findByInviteCode(request.inviteCode().toUpperCase())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid invite code"));
 
-        return tripMemberRepository.findByTripIdAndUserId(trip.getId(), userId)
+        TripMember member = tripMemberRepository.findByTripIdAndUserId(trip.getId(), userId)
                 .orElseGet(() -> {
-                    TripMember member = new TripMember();
-                    member.setTrip(trip);
-                    member.setUserId(userId);
-                    member.setDisplayName(request.displayName());
-                    member.setRole(TripRole.MEMBER);
-                    return tripMemberRepository.save(member);
+                    TripMember newMember = new TripMember();
+                    newMember.setTrip(trip);
+                    newMember.setUserId(userId);
+                    newMember.setDisplayName(request.displayName());
+                    newMember.setRole(TripRole.MEMBER);
+                    return tripMemberRepository.save(newMember);
                 });
+
+        // Same reasoning as createTrip: trip was loaded fresh from the DB,
+        // so members is a genuine unfetched lazy proxy here - initialize it
+        // before the transaction (and its session) closes.
+        Hibernate.initialize(trip.getMembers());
+        return member;
     }
 
     public List<TripMember> listMembers(UUID tripId) {
         return tripMemberRepository.findByTripId(tripId);
+    }
+
+    /** Every trip this user owns or has joined, most recently created first. */
+    @Transactional(readOnly = true)
+    public List<Trip> listTripsForUser(String userId) {
+        List<Trip> trips = tripMemberRepository.findByUserId(userId).stream()
+                .map(TripMember::getTrip)
+                .distinct()
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+                .toList();
+        trips.forEach(trip -> Hibernate.initialize(trip.getMembers()));
+        return trips;
     }
 
     private String generateUniqueInviteCode() {

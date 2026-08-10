@@ -22,16 +22,21 @@ public class TripController {
         this.tripService = tripService;
     }
 
+    @GetMapping
+    public List<TripDto> listMyTrips(@AuthenticationPrincipal(expression = "subject") String userId) {
+        return tripService.listTripsForUser(userId).stream().map(this::toDto).collect(Collectors.toList());
+    }
+
     @PostMapping
     public TripDto createTrip(@Valid @RequestBody CreateTripRequest request,
-                              @AuthenticationPrincipal String userId) {
+                              @AuthenticationPrincipal(expression = "subject") String userId) {
         Trip trip = tripService.createTrip(request, userId, request.name());
         return toDto(trip);
     }
 
     @PostMapping("/join")
     public TripDto joinTrip(@Valid @RequestBody JoinTripRequest request,
-                            @AuthenticationPrincipal String userId) {
+                            @AuthenticationPrincipal(expression = "subject") String userId) {
         TripMember member = tripService.joinTrip(request, userId);
         return toDto(member.getTrip());
     }
