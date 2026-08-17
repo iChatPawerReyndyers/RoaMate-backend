@@ -79,6 +79,15 @@ public class TripService {
         return tripMemberRepository.findByTripId(tripId);
     }
 
+    /** GEO-01: persist the "Share My Location" toggle so GEO-03's silent-push fan-out knows who opted in. */
+    @Transactional
+    public TripMember setLocationSharing(UUID tripId, String userId, boolean enabled) {
+        TripMember member = tripMemberRepository.findByTripIdAndUserId(tripId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("Not a member of this trip"));
+        member.setLocationSharingEnabled(enabled);
+        return tripMemberRepository.save(member);
+    }
+
     /** Every trip this user owns or has joined, most recently created first. */
     @Transactional(readOnly = true)
     public List<Trip> listTripsForUser(String userId) {

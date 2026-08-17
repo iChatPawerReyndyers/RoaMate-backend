@@ -21,6 +21,10 @@ public class ItineraryService {
         return destinationRepository.findByTripIdAndDeletedFalseOrderByAssignedDayAscSortOrderAsc(tripId);
     }
 
+    public UUID tripIdForDestination(UUID destinationId) {
+        return destinationRepository.findById(destinationId).orElseThrow().getTripId();
+    }
+
     @Transactional
     public Destination pinDestination(Destination destination) {
         return destinationRepository.save(destination);

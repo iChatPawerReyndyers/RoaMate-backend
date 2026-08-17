@@ -22,6 +22,10 @@ public class TripMember extends BaseEntity {
     @Column(nullable = false)
     private TripRole role = TripRole.MEMBER;
 
+    /** GEO-01: "Share My Location" (ON/OFF), defaults to OFF. Drives GEO-03's silent-push fan-out. */
+    @Column(nullable = false)
+    private boolean locationSharingEnabled = false;
+
     public Trip getTrip() { return trip; }
     public void setTrip(Trip trip) { this.trip = trip; }
     public String getUserId() { return userId; }
@@ -30,4 +34,6 @@ public class TripMember extends BaseEntity {
     public void setDisplayName(String displayName) { this.displayName = displayName; }
     public TripRole getRole() { return role; }
     public void setRole(TripRole role) { this.role = role; }
+    public boolean isLocationSharingEnabled() { return locationSharingEnabled; }
+    public void setLocationSharingEnabled(boolean locationSharingEnabled) { this.locationSharingEnabled = locationSharingEnabled; }
 }

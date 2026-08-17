@@ -7,5 +7,6 @@ public record TripMemberDto(
         UUID tripId,
         String userId,
         String displayName,
-        String role
+        String role,
+        boolean locationSharingEnabled
 ) {}

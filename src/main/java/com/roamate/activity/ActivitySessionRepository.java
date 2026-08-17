@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface ActivitySessionRepository extends JpaRepository<ActivitySession, UUID> {
     List<ActivitySession> findByTripIdAndUserId(UUID tripId, String userId);
     List<ActivitySession> findByDestinationId(UUID destinationId);
+    List<ActivitySession> findByTripId(UUID tripId);
 }
