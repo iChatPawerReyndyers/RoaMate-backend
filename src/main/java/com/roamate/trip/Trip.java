@@ -22,6 +22,16 @@ public class Trip extends BaseEntity {
     @Column(nullable = false, unique = true, length = 6)
     private String inviteCode;
 
+    /**
+     * TRIP-01: high-entropy secret embedded only in the QR payload, never
+     * displayed as text. Scanning proves possession of the QR image itself
+     * (or a copy of it), not just knowledge of a 6-character string -
+     * satisfying the spec's "embedded with trip cryptographic keys"
+     * requirement as an invite-authentication secret. See V7 migration.
+     */
+    @Column(nullable = false, length = 64)
+    private String inviteSecret;
+
     @Column(nullable = false)
     private String defaultCurrency = "USD";
 
@@ -36,6 +46,8 @@ public class Trip extends BaseEntity {
     public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
     public String getInviteCode() { return inviteCode; }
     public void setInviteCode(String inviteCode) { this.inviteCode = inviteCode; }
+    public String getInviteSecret() { return inviteSecret; }
+    public void setInviteSecret(String inviteSecret) { this.inviteSecret = inviteSecret; }
     public String getDefaultCurrency() { return defaultCurrency; }
     public void setDefaultCurrency(String defaultCurrency) { this.defaultCurrency = defaultCurrency; }
     public List<TripMember> getMembers() { return members; }

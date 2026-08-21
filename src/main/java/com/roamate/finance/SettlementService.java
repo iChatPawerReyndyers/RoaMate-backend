@@ -41,9 +41,9 @@ public class SettlementService {
     private final SimpMessagingTemplate messagingTemplate;
 
     public SettlementService(ExpenseRepository expenseRepository,
-                              KittyDepositRepository kittyDepositRepository,
-                              DuplicateDetectionService duplicateDetectionService,
-                              SimpMessagingTemplate messagingTemplate) {
+                             KittyDepositRepository kittyDepositRepository,
+                             DuplicateDetectionService duplicateDetectionService,
+                             SimpMessagingTemplate messagingTemplate) {
         this.expenseRepository = expenseRepository;
         this.kittyDepositRepository = kittyDepositRepository;
         this.duplicateDetectionService = duplicateDetectionService;
@@ -81,7 +81,7 @@ public class SettlementService {
             // declared total on the Expense itself (see mobile FillRemainingBalance.ts).
             throw new IllegalArgumentException(
                     "Server expects pre-resolved payment amounts; fill-remaining-balance is resolved client-side " +
-                    "in mobile/src/features/finance/FillRemainingBalance.ts before submission");
+                            "in mobile/src/features/finance/FillRemainingBalance.ts before submission");
         } else {
             resolvedLines = lines;
             total = explicitSum;
@@ -130,6 +130,20 @@ public class SettlementService {
         messagingTemplate.convertAndSend("/topic/trips/" + saved.getTripId() + "/expenses", saved.getId());
 
         return saved;
+    }
+
+    /**
+     * FIN-05: raw per-expense list backing the mobile client's offline
+     * settlement cache (see ExpenseDto). Deliberately excludes deleted
+     * expenses only - unlike computeSettlement, flagged duplicates ARE
+     * included here so the client cache mirrors exactly what the Conflict
+     * Review Dashboard would show, and computeLocalSettlement (mobile
+     * SettlementEngine.ts) does its own flaggedDuplicate exclusion at
+     * calculation time, matching computeSettlement's behavior above.
+     */
+    @Transactional(readOnly = true)
+    public List<Expense> listExpenses(UUID tripId) {
+        return expenseRepository.findByTripIdAndDeletedFalse(tripId);
     }
 
     /**

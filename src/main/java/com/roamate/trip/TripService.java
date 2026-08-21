@@ -34,6 +34,7 @@ public class TripService {
             trip.setDefaultCurrency(request.defaultCurrency());
         }
         trip.setInviteCode(generateUniqueInviteCode());
+        trip.setInviteSecret(generateInviteSecret());
         tripRepository.save(trip);
 
         TripMember owner = new TripMember();
@@ -57,6 +58,15 @@ public class TripService {
     public TripMember joinTrip(JoinTripRequest request, String userId) {
         Trip trip = tripRepository.findByInviteCode(request.inviteCode().toUpperCase())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid invite code"));
+
+        // TRIP-01: a request that arrived via ScanQRScreen carries the QR's
+        // embedded inviteSecret alongside the code. Typed-code joins (no
+        // secret in the request) still work exactly as before - this only
+        // adds an extra check on the QR path, it never blocks manual entry.
+        if (request.inviteSecret() != null && !request.inviteSecret().isBlank()
+                && !constantTimeEquals(request.inviteSecret(), trip.getInviteSecret())) {
+            throw new IllegalArgumentException("Invalid invite code");
+        }
 
         TripMember member = tripMemberRepository.findByTripIdAndUserId(trip.getId(), userId)
                 .orElseGet(() -> {
@@ -110,5 +120,27 @@ public class TripService {
             code = sb.toString();
         } while (tripRepository.findByInviteCode(code).isPresent());
         return code;
+    }
+
+    /**
+     * 256 bits of randomness as hex - the QR-only secret from TRIP-01.
+     * Doesn't need a uniqueness check like inviteCode does: it's never
+     * looked up by itself, only compared against a trip already found by
+     * inviteCode, so a collision would be practically impossible and
+     * harmless even if it happened.
+     */
+    private String generateInviteSecret() {
+        byte[] bytes = new byte[32];
+        RNG.nextBytes(bytes);
+        StringBuilder sb = new StringBuilder(64);
+        for (byte b : bytes) sb.append(String.format("%02x", b));
+        return sb.toString();
+    }
+
+    private boolean constantTimeEquals(String a, String b) {
+        if (a == null || b == null) return false;
+        return java.security.MessageDigest.isEqual(
+                a.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                b.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 }

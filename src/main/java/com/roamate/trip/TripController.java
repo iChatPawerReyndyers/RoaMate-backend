@@ -55,8 +55,8 @@ public class TripController {
     /** GEO-01: "Share My Location" (ON/OFF), defaults to OFF. */
     @PutMapping("/{tripId}/members/me/location-sharing")
     public TripMemberDto setLocationSharing(@PathVariable UUID tripId,
-                                             @RequestBody LocationSharingRequest request,
-                                             @AuthenticationPrincipal(expression = "subject") String userId) {
+                                            @RequestBody LocationSharingRequest request,
+                                            @AuthenticationPrincipal(expression = "subject") String userId) {
         return toDto(tripService.setLocationSharing(tripId, userId, request.enabled()));
     }
 
@@ -83,7 +83,7 @@ public class TripController {
                 .map(member -> new TripMemberDto(member.getId(), member.getTrip().getId(), member.getUserId(), member.getDisplayName(), member.getRole().name(), member.isLocationSharingEnabled()))
                 .collect(Collectors.toList());
 
-        return new TripDto(trip.getId(), trip.getName(), trip.getStartDate(), trip.getEndDate(), trip.getInviteCode(), trip.getDefaultCurrency(), members);
+        return new TripDto(trip.getId(), trip.getName(), trip.getStartDate(), trip.getEndDate(), trip.getInviteCode(), trip.getInviteSecret(), trip.getDefaultCurrency(), members);
     }
 
     private TripMemberDto toDto(TripMember member) {

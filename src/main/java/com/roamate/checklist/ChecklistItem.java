@@ -40,6 +40,10 @@ public class ChecklistItem extends BaseEntity {
 
     private String storeCategory;
 
+    /** CHK-01: sub-category for PACKING items (Clothing/Electronics/Toiletries/Gear). Null/unused for GROCERY items. */
+    @Enumerated(EnumType.STRING)
+    private PackingItemCategory packingItemCategory;
+
     /** CHK-04: set once this item has been converted into a linked Expense. */
     private UUID convertedExpenseId;
 
@@ -63,6 +67,8 @@ public class ChecklistItem extends BaseEntity {
     public void setPriority(ChecklistPriority priority) { this.priority = priority; }
     public String getStoreCategory() { return storeCategory; }
     public void setStoreCategory(String storeCategory) { this.storeCategory = storeCategory; }
+    public PackingItemCategory getPackingItemCategory() { return packingItemCategory; }
+    public void setPackingItemCategory(PackingItemCategory packingItemCategory) { this.packingItemCategory = packingItemCategory; }
     public UUID getConvertedExpenseId() { return convertedExpenseId; }
     public void setConvertedExpenseId(UUID convertedExpenseId) { this.convertedExpenseId = convertedExpenseId; }
 }

@@ -10,6 +10,7 @@ public record TripDto(
         LocalDate startDate,
         LocalDate endDate,
         String inviteCode,
+        String inviteSecret,
         String defaultCurrency,
         List<TripMemberDto> members
 ) {}
