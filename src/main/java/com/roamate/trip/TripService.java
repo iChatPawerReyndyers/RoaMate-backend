@@ -28,6 +28,7 @@ public class TripService {
     public Trip createTrip(CreateTripRequest request, String ownerUserId, String ownerDisplayName) {
         Trip trip = new Trip();
         trip.setName(request.name());
+        trip.setDescription(request.description());
         trip.setStartDate(request.startDate());
         trip.setEndDate(request.endDate());
         if (request.defaultCurrency() != null) {

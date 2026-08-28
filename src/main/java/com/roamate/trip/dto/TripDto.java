@@ -7,6 +7,7 @@ import java.util.UUID;
 public record TripDto(
         UUID id,
         String name,
+        String description,
         LocalDate startDate,
         LocalDate endDate,
         String inviteCode,

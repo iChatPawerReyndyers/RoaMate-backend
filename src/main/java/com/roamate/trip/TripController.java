@@ -83,7 +83,7 @@ public class TripController {
                 .map(member -> new TripMemberDto(member.getId(), member.getTrip().getId(), member.getUserId(), member.getDisplayName(), member.getRole().name(), member.isLocationSharingEnabled()))
                 .collect(Collectors.toList());
 
-        return new TripDto(trip.getId(), trip.getName(), trip.getStartDate(), trip.getEndDate(), trip.getInviteCode(), trip.getInviteSecret(), trip.getDefaultCurrency(), members);
+        return new TripDto(trip.getId(), trip.getName(), trip.getDescription(), trip.getStartDate(), trip.getEndDate(), trip.getInviteCode(), trip.getInviteSecret(), trip.getDefaultCurrency(), members);
     }
 
     private TripMemberDto toDto(TripMember member) {

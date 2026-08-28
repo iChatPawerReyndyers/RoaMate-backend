@@ -40,6 +40,10 @@ public class Destination extends BaseEntity {
     /** Comma-separated attachment URLs (photos, PDFs) uploaded via the mobile client. */
     private String attachmentUrls;
 
+    /** ITIN-03: REQUIRED, OPTIONAL, or TENTATIVE - defaults to REQUIRED for existing rows. */
+    @Column(nullable = false)
+    private String priority = "REQUIRED";
+
     public UUID getTripId() { return tripId; }
     public void setTripId(UUID tripId) { this.tripId = tripId; }
     public String getName() { return name; }
@@ -60,4 +64,6 @@ public class Destination extends BaseEntity {
     public void setTargetBudgetCents(Long targetBudgetCents) { this.targetBudgetCents = targetBudgetCents; }
     public String getAttachmentUrls() { return attachmentUrls; }
     public void setAttachmentUrls(String attachmentUrls) { this.attachmentUrls = attachmentUrls; }
+    public String getPriority() { return priority; }
+    public void setPriority(String priority) { this.priority = priority; }
 }
