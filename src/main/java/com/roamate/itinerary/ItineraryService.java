@@ -6,8 +6,10 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
@@ -18,6 +20,9 @@ import java.util.stream.Collectors;
 public class ItineraryService {
 
     private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory(new PrecisionModel(), 4326);
+
+    /** ITIN-06: upper bound for a stop's planned stay (24 hours) - mirrors the mobile field's max. */
+    private static final int MAX_PLANNED_DURATION_MINUTES = 24 * 60;
 
     private final DestinationRepository destinationRepository;
     private final LocationNoteRepository locationNoteRepository;
@@ -63,6 +68,14 @@ public class ItineraryService {
         destination.setTargetBudgetCents(request.targetBudgetCents());
         destination.setAttachmentUrls(request.attachmentUrls());
         destination.setPriority(request.priority() != null ? request.priority() : "REQUIRED");
+        // ITIN-06: like every other field above this is a full overwrite - the
+        // client always sends the stop's current value back (null = no duration).
+        Integer plannedMinutes = request.plannedDurationMinutes();
+        if (plannedMinutes != null && (plannedMinutes < 1 || plannedMinutes > MAX_PLANNED_DURATION_MINUTES)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "plannedDurationMinutes must be between 1 and " + MAX_PLANNED_DURATION_MINUTES);
+        }
+        destination.setPlannedDurationMinutes(plannedMinutes);
 
         return toDto(destinationRepository.save(destination));
     }
@@ -95,6 +108,7 @@ public class ItineraryService {
                 d.getTargetBudgetCents(),
                 d.getAttachmentUrls(),
                 d.getPriority(),
+                d.getPlannedDurationMinutes(),
                 d.getActivityCompletedAt()
         );
     }

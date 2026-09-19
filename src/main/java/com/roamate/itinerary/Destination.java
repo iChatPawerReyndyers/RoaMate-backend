@@ -41,6 +41,9 @@ public class Destination extends BaseEntity {
     /** Comma-separated attachment URLs (photos, PDFs) uploaded via the mobile client. */
     private String attachmentUrls;
 
+    /** ITIN-06: optional planned stay length in whole minutes (e.g. 150 = 2 hrs 30 mins); null = not set. */
+    private Integer plannedDurationMinutes;
+
     /** ITIN-03: REQUIRED, OPTIONAL, or TENTATIVE - defaults to REQUIRED for existing rows. */
     @Column(nullable = false)
     private String priority = "REQUIRED";
@@ -80,6 +83,8 @@ public class Destination extends BaseEntity {
     public void setAttachmentUrls(String attachmentUrls) { this.attachmentUrls = attachmentUrls; }
     public String getPriority() { return priority; }
     public void setPriority(String priority) { this.priority = priority; }
+    public Integer getPlannedDurationMinutes() { return plannedDurationMinutes; }
+    public void setPlannedDurationMinutes(Integer plannedDurationMinutes) { this.plannedDurationMinutes = plannedDurationMinutes; }
     public Instant getActivityCompletedAt() { return activityCompletedAt; }
     public void setActivityCompletedAt(Instant activityCompletedAt) { this.activityCompletedAt = activityCompletedAt; }
 }

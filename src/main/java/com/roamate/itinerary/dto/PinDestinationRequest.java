@@ -26,5 +26,7 @@ public record PinDestinationRequest(
         String operatingHours,
         Long targetBudgetCents,
         String attachmentUrls,
-        String priority
+        String priority,
+        /** ITIN-06: optional planned stay length in whole minutes (1-1440); null clears it. */
+        Integer plannedDurationMinutes
 ) {}

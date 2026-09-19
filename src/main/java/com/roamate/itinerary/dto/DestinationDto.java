@@ -27,6 +27,8 @@ public record DestinationDto(
         Long targetBudgetCents,
         String attachmentUrls,
         String priority,
+        /** ITIN-06: planned stay length in whole minutes, null when not set. */
+        Integer plannedDurationMinutes,
         /** ACT-05: null until "Finish activity" is tapped on the Activity Dashboard for this stop - see Destination.activityCompletedAt's doc comment. */
         Instant activityCompletedAt
 ) {}
