@@ -11,5 +11,7 @@ public enum EventType {
     DESTINATION_REORDERED,
     ACTIVITY_SESSION_RECORDED,
     CHECKLIST_ITEM_TOGGLED,
-    BEACON_ALERT_RAISED
+    BEACON_ALERT_RAISED,
+    /** ACT-05: "Finish activity at this stop", queued when tapped while offline - see DestinationActivityCompletedApplier. */
+    DESTINATION_ACTIVITY_COMPLETED
 }

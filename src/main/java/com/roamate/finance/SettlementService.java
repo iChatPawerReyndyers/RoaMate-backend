@@ -8,6 +8,7 @@ import com.roamate.finance.domain.KittyDeposit;
 import com.roamate.finance.domain.PaymentSource;
 import com.roamate.finance.dto.CreateExpenseRequest;
 import com.roamate.finance.dto.NetBalance;
+import com.roamate.finance.dto.ParticipantShareDto;
 import com.roamate.finance.dto.PaymentLineDto;
 import com.roamate.finance.dto.SettlementSummary;
 import com.roamate.finance.dto.SuggestedTransfer;
@@ -104,21 +105,45 @@ public class SettlementService {
             expense.getPayments().add(payment);
         }
 
-        // FIN-05 / edge case #3: split the total evenly across participants,
-        // then assign the entire rounding remainder to the expense logger if
-        // they're among the participants, falling back to the first
-        // participant listed otherwise - per spec, never spread across
-        // multiple people (see Money#splitEvenlyRemainderToRecipient).
-        List<String> participantIds = request.participantUserIds();
-        int remainderRecipientIndex = Math.max(0, participantIds.indexOf(request.createdByUserId()));
-        Money[] shares = Money.ofCents(total)
-                .splitEvenlyRemainderToRecipient(participantIds.size(), remainderRecipientIndex);
-        for (int i = 0; i < participantIds.size(); i++) {
-            ExpenseParticipant participant = new ExpenseParticipant();
-            participant.setExpense(expense);
-            participant.setUserId(participantIds.get(i));
-            participant.setFairShare(shares[i]);
-            expense.getParticipants().add(participant);
+        // FIN-04 (custom split): use the client's fully-resolved per-
+        // participant shares when provided - same "server expects
+        // pre-resolved concrete amounts, just validate and persist" contract
+        // as `payments` above (see mobile ExpenseEntryScreen.tsx's
+        // resolveEvenSplitRemaining, used for both Who Paid and Split
+        // Between now). Falls back to the original even-split-across-
+        // participantUserIds behavior when absent, so older callers that
+        // never sent this field are completely unaffected.
+        List<ParticipantShareDto> shares = request.participantShares();
+        if (shares != null && !shares.isEmpty()) {
+            long sharesSum = shares.stream().mapToLong(ParticipantShareDto::amountCents).sum();
+            if (sharesSum != total) {
+                throw new IllegalArgumentException(
+                        "Participant shares sum to " + sharesSum + " but expense total is " + total);
+            }
+            for (ParticipantShareDto share : shares) {
+                ExpenseParticipant participant = new ExpenseParticipant();
+                participant.setExpense(expense);
+                participant.setUserId(share.userId());
+                participant.setFairShare(Money.ofCents(share.amountCents()));
+                expense.getParticipants().add(participant);
+            }
+        } else {
+            // FIN-05 / edge case #3: split the total evenly across participants,
+            // then assign the entire rounding remainder to the expense logger if
+            // they're among the participants, falling back to the first
+            // participant listed otherwise - per spec, never spread across
+            // multiple people (see Money#splitEvenlyRemainderToRecipient).
+            List<String> participantIds = request.participantUserIds();
+            int remainderRecipientIndex = Math.max(0, participantIds.indexOf(request.createdByUserId()));
+            Money[] evenShares = Money.ofCents(total)
+                    .splitEvenlyRemainderToRecipient(participantIds.size(), remainderRecipientIndex);
+            for (int i = 0; i < participantIds.size(); i++) {
+                ExpenseParticipant participant = new ExpenseParticipant();
+                participant.setExpense(expense);
+                participant.setUserId(participantIds.get(i));
+                participant.setFairShare(evenShares[i]);
+                expense.getParticipants().add(participant);
+            }
         }
 
         Expense saved = expenseRepository.save(expense);

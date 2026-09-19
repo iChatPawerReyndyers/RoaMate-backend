@@ -1,5 +1,6 @@
 package com.roamate.itinerary.dto;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -25,5 +26,7 @@ public record DestinationDto(
         String operatingHours,
         Long targetBudgetCents,
         String attachmentUrls,
-        String priority
+        String priority,
+        /** ACT-05: null until "Finish activity" is tapped on the Activity Dashboard for this stop - see Destination.activityCompletedAt's doc comment. */
+        Instant activityCompletedAt
 ) {}

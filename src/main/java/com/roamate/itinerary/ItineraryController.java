@@ -57,6 +57,20 @@ public class ItineraryController {
         itineraryService.reorder(orderedIds);
     }
 
+    /**
+     * ACT-05: called by the "Finish activity at this stop" button (and by
+     * the auto-detect prompt, when the traveler confirms it) on the
+     * Activity Dashboard. Open to any trip member for the same reason
+     * every other itinerary edit above is: trip membership is already the
+     * real gate.
+     */
+    @PatchMapping("/destinations/{destinationId}/activity-complete")
+    public DestinationDto markActivityCompleted(@PathVariable UUID destinationId,
+                                                 @AuthenticationPrincipal(expression = "subject") String userId) {
+        requireMember(itineraryService.tripIdForDestination(destinationId), userId);
+        return itineraryService.markActivityCompleted(destinationId);
+    }
+
     @PostMapping("/notes")
     public LocationNote addNote(@RequestBody LocationNote note) {
         // Adding location notes has never been admin-gated (open to all

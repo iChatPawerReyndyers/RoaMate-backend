@@ -9,6 +9,7 @@ import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -93,8 +94,24 @@ public class ItineraryService {
                 d.getOperatingHours(),
                 d.getTargetBudgetCents(),
                 d.getAttachmentUrls(),
-                d.getPriority()
+                d.getPriority(),
+                d.getActivityCompletedAt()
         );
+    }
+
+    /**
+     * ACT-05: marks the activity tracked at this stop as done, so the
+     * mobile card can finally show its accumulated metrics (see
+     * Destination.activityCompletedAt's doc comment for why this can't
+     * just be inferred from ActivitySession existing). Also the
+     * EventApplier target for the offline-queued equivalent - see
+     * DestinationActivityCompletedApplier.
+     */
+    @Transactional
+    public DestinationDto markActivityCompleted(UUID destinationId) {
+        Destination destination = destinationRepository.findById(destinationId).orElseThrow();
+        destination.setActivityCompletedAt(Instant.now());
+        return toDto(destinationRepository.save(destination));
     }
 
     /** ITIN-01: persists a new drag-reorder sequence for a day's stops. */

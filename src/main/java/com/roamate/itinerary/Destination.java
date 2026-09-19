@@ -4,6 +4,7 @@ import com.roamate.common.BaseEntity;
 import jakarta.persistence.*;
 import org.locationtech.jts.geom.Point;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -44,6 +45,19 @@ public class Destination extends BaseEntity {
     @Column(nullable = false)
     private String priority = "REQUIRED";
 
+    /**
+     * ACT-05: when the activity tracked at this stop was explicitly marked
+     * done (see ItineraryService.markActivityCompleted). Null means "not
+     * finished yet" - the Pinned Location Card gates on this rather than
+     * on ActivitySession existence, since sessions get created mid-activity
+     * (periodic pedometer batches, an elevation stop-and-upload) well
+     * before the traveler is actually done with this stop. Left nullable
+     * and not reset automatically on a later "start activity here" tap, so
+     * a finished stop stays finished (and keeps showing its metrics) even
+     * if someone logs an additional session there afterward.
+     */
+    private Instant activityCompletedAt;
+
     public UUID getTripId() { return tripId; }
     public void setTripId(UUID tripId) { this.tripId = tripId; }
     public String getName() { return name; }
@@ -66,4 +80,6 @@ public class Destination extends BaseEntity {
     public void setAttachmentUrls(String attachmentUrls) { this.attachmentUrls = attachmentUrls; }
     public String getPriority() { return priority; }
     public void setPriority(String priority) { this.priority = priority; }
+    public Instant getActivityCompletedAt() { return activityCompletedAt; }
+    public void setActivityCompletedAt(Instant activityCompletedAt) { this.activityCompletedAt = activityCompletedAt; }
 }
