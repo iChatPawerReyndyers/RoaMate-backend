@@ -11,6 +11,7 @@ import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Minimal DEV-ONLY auth flow: issues an HS256 JWT for a given userId with
@@ -42,6 +43,7 @@ public class AuthController {
     public record TokenResponse(String accessToken, String tokenType, long expiresInSeconds, String userId, String username) {}
     public record RegisterRequest(String username, String password, String previousUserId) {}
     public record LoginRequest(String username, String password) {}
+    public record DevResetPasswordRequest(String username, String newPassword) {}
 
     @PostMapping("/dev-login")
     public TokenResponse devLogin(@RequestBody DevLoginRequest request) {
@@ -49,6 +51,39 @@ public class AuthController {
         // Kept for backward compatibility with any client still calling
         // this; username is unknown/absent for a bare device id.
         return token;
+    }
+
+    /**
+     * DEV-ONLY, same trust model as /dev-login above: sets a user's
+     * password and logs them in immediately, with NO proof they own the
+     * account - no old password, no verification of any kind. This is an
+     * account-takeover primitive for anyone who knows a username. Keep it
+     * for a closed testing group only; remove or gate it before real
+     * people's accounts live on this server.
+     */
+    @PostMapping("/dev-reset-password")
+    public TokenResponse devResetPassword(@RequestBody DevResetPasswordRequest request) {
+        if (request.newPassword() == null || request.newPassword().length() < 8) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password must be at least 8 characters");
+        }
+        try {
+            User user = userService.devResetPassword(request.username(), request.newPassword());
+            return issueToken(user.getId().toString(), user.getUsername());
+        } catch (UserService.UsernameNotFoundException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getMessage());
+        }
+    }
+
+    /**
+     * Live "is this username free?" check for the sign-up form, so someone
+     * can be told before they even submit. This is a convenience only -
+     * /register still independently rejects a duplicate at submit time
+     * (see the 409 handling below), since a username could be taken by
+     * someone else between this check and the actual submit.
+     */
+    @GetMapping("/username-available")
+    public Map<String, Boolean> usernameAvailable(@RequestParam String username) {
+        return Map.of("available", !userService.isUsernameTaken(username));
     }
 
     @PostMapping("/register")

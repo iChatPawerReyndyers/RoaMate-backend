@@ -55,6 +55,12 @@ public class UserService {
         }
     }
 
+    public static class UsernameNotFoundException extends RuntimeException {
+        public UsernameNotFoundException(String username) {
+            super("No account found for username '" + username + "'");
+        }
+    }
+
     /**
      * Creates a new account. If previousUserId is supplied (the caller's
      * old anonymous device id), every row currently attributed to that id
@@ -96,6 +102,25 @@ public class UserService {
 
     public boolean isUsernameTaken(String username) {
         return userRepository.existsByUsername(username.trim().toLowerCase());
+    }
+
+    /**
+     * DEV-ONLY: sets a user's password directly with NO proof of ownership -
+     * no old password, no email/SMS verification, nothing. Same trust model
+     * as AuthController's /dev-login: it exists so a test account's
+     * password can be reset without building a real "forgot password"
+     * delivery flow. Anyone who knows (or guesses) a username can take
+     * that account over through this call alone - fine for a closed group
+     * of testers, not something to leave reachable once this server holds
+     * real people's trip data. See AuthController's /dev-reset-password.
+     */
+    @Transactional
+    public User devResetPassword(String username, String newPassword) {
+        String normalized = username.trim().toLowerCase();
+        User user = userRepository.findByUsername(normalized)
+                .orElseThrow(() -> new UsernameNotFoundException(normalized));
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        return userRepository.save(user);
     }
 
     private void migrateAnonymousData(String oldUserId, String newUserId) {
